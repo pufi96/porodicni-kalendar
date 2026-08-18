@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f7f5f2;
+  --surface: #ffffff;
+  --surface-2: #f2efea;
+  --border: #e2ddd5;
+  --text: #1c1917;
+  --muted: #78716c;
+  --accent: #b45309;
+  --accent-soft: #fef3c7;
+  --good: #15803d;
+  --warn: #b91c1c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14120f;
+    --surface: #1e1b17;
+    --surface-2: #272320;
+    --border: #38322c;
+    --text: #f5f1ea;
+    --muted: #a8a29e;
+    --accent: #f59e0b;
+    --accent-soft: #3a2c10;
+    --good: #4ade80;
+    --warn: #f87171;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-good: var(--good);
+  --color-warn: var(--warn);
+}
+
+html {
+  /* Sprecava da iOS Safari zumira stranu kad se fokusira polje za unos. */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  overscroll-behavior-y: none;
+}
+
+/* Polja za unos ispod 16px teraju iOS da zumira - drzimo ih na 16px. */
+input,
+select,
+textarea,
+button {
+  font-size: 16px;
+}
+
+@layer components {
+  .kartica {
+    @apply rounded-2xl border border-border bg-surface;
+  }
+
+  /* Tailwind v4 ne dozvoljava @apply na sopstvenoj komponentnoj klasi,
+     pa se osnovni izgled dugmeta ponavlja umesto da se nasledjuje. */
+  .dugme,
+  .dugme-glavno,
+  .dugme-tiho {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3
+           font-medium transition active:scale-[0.98] disabled:opacity-50
+           disabled:active:scale-100;
+  }
+
+  .dugme-glavno {
+    @apply bg-accent text-white shadow-sm hover:brightness-110;
+  }
+
+  .dugme-tiho {
+    @apply border border-border bg-surface text-text hover:bg-surface-2;
+  }
+
+  .polje {
+    @apply w-full rounded-xl border border-border bg-surface px-4 py-3
+           text-text outline-none placeholder:text-muted
+           focus:border-accent focus:ring-2 focus:ring-accent/25;
+  }
+
+  .oznaka {
+    @apply mb-1.5 block text-sm font-medium text-muted;
+  }
+}

@@ -1,0 +1,90 @@
+// Vreme se svuda cuva kao minuti od ponoci (1080 = 18:00),
+// a datum kao "YYYY-MM-DD" string. Nigde nema Date sa vremenskom zonom,
+// pa nema ni klase gresaka "pisalo je 18h a prikazalo 19h".
+//
+// Lokalni razvoj koristi SQLite. Za deploy se provider menja u "postgresql"
+// (vidi README) - sema ne koristi nista sto je specificno za jednu bazu.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Group {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  name      String
+  pinHash   String
+  createdAt DateTime @default(now())
+
+  members Member[]
+}
+
+model Member {
+  id        String   @id @default(uuid())
+  groupId   String
+  name      String
+  color     String
+  createdAt DateTime @default(now())
+
+  group     Group           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  recurring RecurringSlot[]
+  overrides DayOverride[]
+
+  @@unique([groupId, name])
+  @@index([groupId])
+}
+
+// Nedeljni sablon: "ponedeljkom sam slobodan 18:00-22:00"
+model RecurringSlot {
+  id       String @id @default(uuid())
+  memberId String
+  weekday  Int // 1 = ponedeljak ... 7 = nedelja (ISO)
+  startMin Int
+  endMin   Int
+
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([memberId])
+}
+
+// Izuzetak za konkretan datum. Postojanje reda znaci da se sablon
+// za taj dan potpuno ignorise; prazna lista slotova = tog dana nisam slobodan.
+model DayOverride {
+  id       String  @id @default(uuid())
+  memberId String
+  date     String // "2026-08-22"
+  note     String?
+
+  member Member         @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  slots  OverrideSlot[]
+
+  @@unique([memberId, date])
+  @@index([memberId, date])
+}
+
+model OverrideSlot {
+  id            String @id @default(uuid())
+  dayOverrideId String
+  startMin      Int
+  endMin        Int
+
+  dayOverride DayOverride @relation(fields: [dayOverrideId], references: [id], onDelete: Cascade)
+
+  @@index([dayOverrideId])
+}
+
+// Ogranicavanje pokusaja PIN-a. Mora u bazi, ne u memoriji:
+// serverless funkcije na Vercelu ne dele memoriju izmedju poziva.
+model PinAttempt {
+  id        String   @id @default(uuid())
+  groupSlug String
+  ip        String
+  at        DateTime @default(now())
+
+  @@index([groupSlug, ip, at])
+}
