@@ -1,6 +1,6 @@
 "use client";
 
-import { hhmmToMin } from "@/lib/time";
+import { hhmmToMin, minToHHMM } from "@/lib/time";
 
 export const BRZI_OPSEZI: { naziv: string; od: string; do: string }[] = [
   { naziv: "Posle posla", od: "18:00", do: "22:00" },
@@ -9,10 +9,68 @@ export const BRZI_OPSEZI: { naziv: string; od: string; do: string }[] = [
   { naziv: "Ceo dan", od: "09:00", do: "22:00" },
 ];
 
+const SATI = Array.from({ length: 25 }, (_, i) => i); // 00..24
+const MINUTI = [0, 15, 30, 45];
+
+function rasclani(v: string): { sat: number; min: number } {
+  const m = hhmmToMin(v);
+  if (m === null) return { sat: 18, min: 0 };
+  return { sat: Math.floor(m / 60), min: m % 60 };
+}
+
 /**
- * Dva polja za vreme plus brzi izbori. Na telefonu type="time" otvara
- * nativni tocak, sto je daleko lakse starijima od kucanja.
+ * Dva dropdowna (sat, minut) umesto <input type="time">. Nativni time input
+ * se prikazuje u 12h AM/PM formatu kad je OS region postavljen na engleski,
+ * bez obzira sto je ostatak strane na srpskom - ovako je prikaz uvek 24h,
+ * bez obzira na regionalna podesavanja uredjaja.
  */
+function SelektorVremena({
+  vrednost,
+  onChange,
+  oznaka,
+}: {
+  vrednost: string;
+  onChange: (v: string) => void;
+  oznaka: string;
+}) {
+  const { sat, min } = rasclani(vrednost);
+
+  return (
+    <div className="flex flex-1 items-center overflow-hidden rounded-xl border border-border bg-surface focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/25">
+      <select
+        aria-label={`${oznaka} - sat`}
+        className="w-full appearance-none bg-transparent py-3 pl-3 pr-1 text-center outline-none"
+        value={sat}
+        onChange={(e) => {
+          const noviSat = Number(e.target.value);
+          // 24 ima smisla samo kao 24:00 - ostali minuti bi bili van dana.
+          onChange(minToHHMM(noviSat * 60 + (noviSat === 24 ? 0 : min)));
+        }}
+      >
+        {SATI.map((s) => (
+          <option key={s} value={s}>
+            {String(s).padStart(2, "0")}
+          </option>
+        ))}
+      </select>
+      <span className="text-muted">:</span>
+      <select
+        aria-label={`${oznaka} - minut`}
+        className="w-full appearance-none bg-transparent py-3 pl-1 pr-3 text-center outline-none disabled:opacity-40"
+        value={min}
+        disabled={sat === 24}
+        onChange={(e) => onChange(minToHHMM(sat * 60 + Number(e.target.value)))}
+      >
+        {MINUTI.map((m) => (
+          <option key={m} value={m}>
+            {String(m).padStart(2, "0")}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 export function OpsegUnos({
   od,
   doo,
@@ -48,29 +106,9 @@ export function OpsegUnos({
       </div>
 
       <div className="flex items-center gap-2">
-        <label className="sr-only" htmlFor="od">
-          Od
-        </label>
-        <input
-          id="od"
-          type="time"
-          value={od}
-          onChange={(e) => setOd(e.target.value)}
-          className="polje flex-1"
-          step={900}
-        />
+        <SelektorVremena vrednost={od} onChange={setOd} oznaka="Od" />
         <span className="text-muted">do</span>
-        <label className="sr-only" htmlFor="do">
-          Do
-        </label>
-        <input
-          id="do"
-          type="time"
-          value={doo}
-          onChange={(e) => setDoo(e.target.value)}
-          className="polje flex-1"
-          step={900}
-        />
+        <SelektorVremena vrednost={doo} onChange={setDoo} oznaka="Do" />
       </div>
 
       {nevalja && (

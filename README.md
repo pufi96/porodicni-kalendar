@@ -77,10 +77,30 @@ Identitet clana („ja sam Pera") stoji u `localStorage` i **namerno se ne prove
 na serveru** — tako mozes uneti termine i umesto rodjaka koji nema pametan telefon.
 Kad menjas tudji kalendar, to jasno pise na vrhu strane.
 
-## Deploy na Vercel + Neon
+## Deploy — besplatan hosting
 
-Lokalni razvoj koristi SQLite; produkcija ide na Postgres. Sema ne koristi nista
-sto je specificno za jednu bazu, pa je zamena cista.
+Preporuka: **Vercel** (aplikacija) + **Neon** (Postgres baza). Oboje ima trajno
+besplatan tier, ne trazi karticu, i ova kombinacija je pravljena bas za
+Next.js + Prisma:
+
+- **Vercel** je jedini od besplatnih hostinga za Next.js koji ne uspavljuje
+  server. Render/Railway free tier gase servis posle 15-ak minuta neaktivnosti
+  pa prvi sledeci zahtev ceka i 30-ak sekundi — bas kad rodjak prvi put otvori
+  link, sto ostavlja los prvi utisak.
+- **Neon** je serverless Postgres koji takodje ne trazi karticu za besplatan
+  tier (0.5 GB — za porodicni kalendar i vise nego dovoljno), i direktno se
+  povezuje sa Vercel nalogom kao integracija (Vercel sam ponudi da doda
+  `DATABASE_URL`).
+
+Napravljeno je ono sto ide bez naloga:
+- `prisma generate` je vec deo `npm run build` ([package.json](package.json)) —
+  Vercel bi inace keshirao stari Prisma Client.
+- `package.json` ima `engines.node: ">=20.9"` da Vercel odabere ispravnu
+  verziju Node-a za Next 16.
+- Sema je probno validirana pod `provider = "postgresql"` (`npx prisma
+  validate`) — prolazi bez izmena, jer ne koristi nista SQLite-specificno.
+
+Ostaje ono sto samo ti mozes, jer trazi tvoje naloge:
 
 **1. Promeni bazu u `prisma/schema.prisma`:**
 
@@ -119,15 +139,7 @@ U Vercel podesavanjima dodaj dve promenljive okruzenja:
 | `DATABASE_URL` | connection string sa Neona |
 | `SESSION_SECRET` | vrednost iz koraka 4 |
 
-**6. Dodaj `prisma generate` u build.** U `package.json`:
-
-```json
-"build": "prisma generate && next build"
-```
-
-Bez toga Vercel keshira `node_modules` i Prisma Client ostane stari.
-
-**7. Posle prvog deploya pusti migracije na produkcijsku bazu:**
+**6. Posle prvog deploya pusti migracije na produkcijsku bazu:**
 
 ```bash
 DATABASE_URL="<neon-connection-string>" npx prisma migrate deploy
@@ -156,11 +168,15 @@ bez diranja sistemskog Node-a:
   "C:\Users\Pufi\AppData\Local\nodejs-lts-v24\node-v24.19.0-win-x64\npm.cmd" run dev
   ```
 
-Pokusaj da se sistemski Node podigne preko `winget install OpenJS.NodeJS.LTS`
-zapeo je na potvrdi za administratorska prava (UAC), koja u automatizovanoj
-sesiji nema ko da klikne. Ako se ta potvrda i dalje pojavljuje na ekranu, klikni
-je da i sistemski Node predje na noviju verziju; u suprotnom projekat radi
-nezavisno preko lokalnog Node-a opisanog gore.
+Sistemski Node je u medjuvremenu i sam podignut na 24.19.0 (`winget install
+OpenJS.NodeJS.LTS` je prosao posle potvrde UAC prompta). I dalje ostaje
+losa strana: sistemski `npm` u nekim ljuskama (PowerShell) i dalje resolvuje
+na stariji globalni `npm` shim (`%APPDATA%\npm`) umesto na svezi 11.x koji
+dolazi uz Node 24, dok Bash ljuska to resolvuje ispravno. Zbog te
+nedoslednosti `.claude/dev.cmd` i dalje koristi izolovani Node 24 zip da
+build/dev uvek budu ponovljivi bez obzira na to koja se ljuska koristi. Ako
+zelis da i sistemski `npm` bude dosledan, pokreni `npm install -g npm@latest`
+(ne dira ostale globalne pakete).
 
 ### Zasto Prisma i TypeScript nisu na najnovijoj glavnoj verziji
 
