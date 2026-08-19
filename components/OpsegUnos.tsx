@@ -39,7 +39,7 @@ function SelektorVremena({
     <div className="flex flex-1 items-center overflow-hidden rounded-xl border border-border bg-surface focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/25">
       <select
         aria-label={`${oznaka} - sat`}
-        className="w-full appearance-none bg-transparent py-3 pl-3 pr-1 text-center outline-none"
+        className="w-full appearance-none bg-surface py-3 pl-3 pr-1 text-center outline-none"
         value={sat}
         onChange={(e) => {
           const noviSat = Number(e.target.value);
@@ -56,7 +56,7 @@ function SelektorVremena({
       <span className="text-muted">:</span>
       <select
         aria-label={`${oznaka} - minut`}
-        className="w-full appearance-none bg-transparent py-3 pl-1 pr-3 text-center outline-none disabled:opacity-40"
+        className="w-full appearance-none bg-surface py-3 pl-1 pr-3 text-center outline-none disabled:opacity-40"
         value={min}
         disabled={sat === 24}
         onChange={(e) => onChange(minToHHMM(sat * 60 + Number(e.target.value)))}

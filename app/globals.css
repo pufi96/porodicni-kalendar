@@ -1,6 +1,11 @@
 @import "tailwindcss";
 
 :root {
+  /* Bez ovoga pregledac crta nativne kontrole (padajucu listu <select>-a,
+     skrolbarove) po svetloj semi i u tamnoj temi - tekst opcija ispadne
+     bele boje na beloj podlozi, pa se vidi tek kad ga hover oboji. */
+  color-scheme: light;
+
   --bg: #f7f5f2;
   --surface: #ffffff;
   --surface-2: #f2efea;
@@ -15,6 +20,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
+    color-scheme: dark;
+
     --bg: #14120f;
     --surface: #1e1b17;
     --surface-2: #272320;
@@ -61,6 +68,14 @@ select,
 textarea,
 button {
   font-size: 16px;
+}
+
+/* Padajucu listu crta pregledac, ne nasa CSS pravila, pa boje moraju
+   eksplicitno ovde - `color-scheme` gore resava vecinu pregledaca,
+   ovo pokriva ostale. */
+option {
+  background-color: var(--surface);
+  color: var(--text);
 }
 
 @layer components {
